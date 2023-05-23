@@ -343,11 +343,13 @@ class AVLTree(object):
     """returns an array representing dictionary 
 
     @rtype: list
-    @returns: a sorted list according to key of touples (key, value) representing the data structure
+    @returns: a sorted list according to key of tuples (key, value) representing the data structure
     """
 
     def avl_to_array(self):
-        return None
+        arr = [0] * self.size()
+        avl_to_array_rec(arr, self.root, 0)
+        return arr
 
     """returns the number of items in dictionary 
 
@@ -462,3 +464,13 @@ def update_height(node):
 
 def bf(node):
     return node.left.height - node.right.height
+
+
+def avl_to_array_rec(array, node, index):
+    if node.left.is_real_node():
+        avl_to_array_rec(array, node.left, index)
+        index += array.node.left.size
+    array[index] = (node.key, node.value)
+    index += 1
+    if node.right.is_real_node():
+        avl_to_array_rec(array, node.right, index)
