@@ -220,33 +220,39 @@ class AVLTree(object):
         node.left = AVLNode(None, None)
         node.right = AVLNode(None, None)
 
-        height_changes = 0
+        rebalancing_ops = 0
         while node is not None:
             node.size += 1
             if node.height == max(node.left.height, node.right.height) + 1:
-                return height_changes
+                break
             else:
-                height_changes += 1
+                rebalancing_ops += 1
                 node.set_height(max(node.left.height, node.right.height) + 1)
             if bf(node) == 2:
                 if bf(node.left) == -1:
                     rotate_left(node.left)
                     rotate_right(node)
-                    return 2 + height_changes
+                    rebalancing_ops += 2
+                    break
                 else:
                     rotate_right(node)
-                    return 1 + height_changes
+                    rebalancing_ops += 1
+                    break
             elif bf(node) == -2:
                 if bf(node.right) == -1:
                     rotate_left(node)
-                    return 1 + height_changes
+                    rebalancing_ops += 1
+                    break
                 else:
                     rotate_right(node.right)
                     rotate_left(node.left)
-                    return 2 + height_changes
-
+                    rebalancing_ops += 2
+                    break
             node = node.parent
-        return height_changes
+        while node is not None:
+            node.size += 1
+            node = node.parent
+        return rebalancing_ops
 
     """deletes node from the dictionary
 
@@ -264,6 +270,7 @@ class AVLTree(object):
                 node.parent.right = AVLNode(None, None)
             elif node.parent.left == node:
                 node.parent.left = AVLNode(None, None)
+            parent = node.parent
         elif not node.left.is_real_node(): # no left child
             # find if node is left or right child of its parent and remove it.
             if node.parent.right == node:
@@ -271,6 +278,7 @@ class AVLTree(object):
             elif node.parent.left == node:
                 node.parent.left = node.right
             node.right.parent = node.parent
+            parent = node.parent
         elif not node.right.is_real_node(): # no right child
             # find if node is left or right child of its parent and remove it.
             if node.parent.right == node:
@@ -278,6 +286,7 @@ class AVLTree(object):
             elif node.parent.left == node:
                 node.parent.left = node.left
             node.left.parent = node.parent
+            parent = node.parent
         else:
             # find successor
             successor = node.right
@@ -285,9 +294,46 @@ class AVLTree(object):
                 successor = successor.left
 
             # remove successor
-            successor.parent.left = AVLNode(None, None)
-            successor.parent.left =
+            successor.parent.left = successor.right # if successor.right doesn't exist it's a virtual node
+            successor.right.parent = successor.parent
 
+            parent = successor.parent
+
+            # replace node with successor
+            successor.left = node.left
+            successor.left.parent = successor
+            successor.right = node.right
+            successor.right.parent = successor
+            successor.parent = node.parent
+            node.parent = successor
+
+        rebalancing_ops = 0
+        # Fix BF
+        while parent is not None:
+            parent.size += 1
+            if parent.height == max(parent.left.height, parent.right.height) + 1:
+                return rebalancing_ops
+            else:
+                rebalancing_ops += 1
+                parent.set_height(max(parent.left.height, parent.right.height) + 1)
+            if bf(parent) == 2:
+                if bf(parent.left) == -1:
+                    rotate_left(parent.left)
+                    rotate_right(parent)
+                    rebalancing_ops += 2
+                else:
+                    rotate_right(parent)
+                    rebalancing_ops += 1
+            elif bf(parent) == -2:
+                if bf(parent.right) == 1:
+                    rotate_right(parent.right)
+                    rotate_left(parent.left)
+                    rebalancing_ops += 2
+                else:
+                    rotate_left(parent)
+                    rebalancing_ops += 1
+            parent = parent.parent
+        return rebalancing_ops
 
 
 
