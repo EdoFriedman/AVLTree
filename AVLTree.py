@@ -422,6 +422,8 @@ class AVLTree(object):
     """
 
     def get_root(self):
+        if self.root.is_real_node():
+            return self.root
         return None
 
 
