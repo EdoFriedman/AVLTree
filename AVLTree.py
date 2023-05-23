@@ -1,8 +1,8 @@
-#username - yoavs2
-#id1      - 216282996
-#name1    - Yoav Steinberg
-#id2      - 215387507
-#name2    - Edo Friedman
+# username - yoavs2
+# id1      - 216282996
+# name1    - Yoav Steinberg
+# id2      - 215387507
+# name2    - Edo Friedman
 
 
 """A class represnting a node in an AVL tree"""
@@ -264,14 +264,14 @@ class AVLTree(object):
 
     def delete(self, node):
         # Delete normally.
-        if node.height == 0: # leaf.
+        if node.height == 0:  # leaf.
             # find if node is left or right child of its parent and remove it.
             if node.parent.right == node:
                 node.parent.right = AVLNode(None, None)
             elif node.parent.left == node:
                 node.parent.left = AVLNode(None, None)
             parent = node.parent
-        elif not node.left.is_real_node(): # no left child
+        elif not node.left.is_real_node():  # no left child
             # find if node is left or right child of its parent and remove it.
             if node.parent.right == node:
                 node.parent.right = node.right
@@ -279,7 +279,7 @@ class AVLTree(object):
                 node.parent.left = node.right
             node.right.parent = node.parent
             parent = node.parent
-        elif not node.right.is_real_node(): # no right child
+        elif not node.right.is_real_node():  # no right child
             # find if node is left or right child of its parent and remove it.
             if node.parent.right == node:
                 node.parent.right = node.left
@@ -294,7 +294,7 @@ class AVLTree(object):
                 successor = successor.left
 
             # remove successor
-            successor.parent.left = successor.right # if successor.right doesn't exist it's a virtual node
+            successor.parent.left = successor.right  # if successor.right doesn't exist it's a virtual node
             successor.right.parent = successor.parent
 
             parent = successor.parent
@@ -335,11 +335,6 @@ class AVLTree(object):
             parent = parent.parent
         return rebalancing_ops
 
-
-
-
-
-
     """returns an array representing dictionary 
 
     @rtype: list
@@ -348,7 +343,7 @@ class AVLTree(object):
 
     def avl_to_array(self):
         arr = [0] * self.size()
-        avl_to_array_rec(arr, self.root, 0)
+        self.avl_to_array_rec(arr, self.root, 0)
         return arr
 
     """returns the number of items in dictionary 
@@ -356,6 +351,24 @@ class AVLTree(object):
     @rtype: int
     @returns: the number of items in dictionary 
     """
+
+    """recursively creates a sorted array of (key, value) pairs from an avl tree
+    @type node: array
+    @param node: the array to place the (key, value) pairs into
+    @type node: AVLNode
+    @param node: the subtree to add to the array
+    @type index: int
+    @param index: the array index to put the first (key, value) pair in
+    """
+
+    def avl_to_array_rec(self, array, node, index):
+        if node.left.is_real_node():
+            self.avl_to_array_rec(array, node.left, index)
+            index += array.node.left.size
+        array[index] = (node.key, node.value)
+        index += 1
+        if node.right.is_real_node():
+            self.avl_to_array_rec(array, node.right, index)
 
     def size(self):
         return self.get_root().get_size()
@@ -401,7 +414,14 @@ class AVLTree(object):
     """
 
     def rank(self, node):
-        return None
+        rank = node.left.size + 1
+        x = node
+        while x is not None:
+            if x == x.parent.right:
+                rank += x.parent.left.size + 1
+            x = x.parent
+
+        return rank
 
     """finds the i'th smallest item (according to keys) in self
 
@@ -413,13 +433,33 @@ class AVLTree(object):
     """
 
     def select(self, i):
-        return None
+        return self.select_rec(self.root, i)
+
+    """recursively finds the i'th smallest item (according to keys) in self
+
+        @type i: int
+        @pre: 1 <= i <= self.size()
+        @param i: the rank to be selected in x
+        @type x: AVLNode
+        @param x: root of tree to select in. 
+        @rtype: int
+        @returns: the item of rank i in self
+        """
+
+    def select_rec(self, x, i):
+        rank = x.left.size + 1
+        if rank == i:  # found the i'th smallest element
+            return x
+        elif rank > i:  # i'th smallest element is on the left:
+            return self.select_rec(x.left, i)
+        else:  # i'th smallest element is on the right
+            return self.select_rec(x.right, i - rank)
 
     """returns the root of the tree representing the dictionary
 
-    @rtype: AVLNode
-    @returns: the root, None if the dictionary is empty
-    """
+        @rtype: AVLNode
+        @returns: the root, None if the dictionary is empty
+        """
 
     def get_root(self):
         if self.root.is_real_node():
@@ -431,6 +471,8 @@ class AVLTree(object):
 @type node: AVLNode
 @param node: the node to rotate
 """
+
+
 def rotate_right(node):
     # AVL lecture slide 62
     left_child = node.left
@@ -452,6 +494,8 @@ def rotate_right(node):
 @type node: AVLNode
 @param node: the node to rotate
 """
+
+
 def rotate_left(node):
     right_child = node.left
     node.set_right(right_child.left)
@@ -472,6 +516,8 @@ def rotate_left(node):
 @type node: AVLNode
 @param node: the node to update
 """
+
+
 def update_height(node):
     node.set_height(max(node.left.height, node.right.height) + 1)
 
@@ -482,23 +528,7 @@ def update_height(node):
 @rtype: int
 @returns: the node's balance factor
 """
+
+
 def bf(node):
     return node.left.height - node.right.height
-
-
-"""recursively creates a sorted array of (key, value) pairs from an avl tree
-@type node: array
-@param node: the array to place the (key, value) pairs into
-@type node: AVLNode
-@param node: the subtree to add to the array
-@type index: int
-@param index: the array index to put the first (key, value) pair in
-"""
-def avl_to_array_rec(array, node, index):
-    if node.left.is_real_node():
-        avl_to_array_rec(array, node.left, index)
-        index += array.node.left.size
-    array[index] = (node.key, node.value)
-    index += 1
-    if node.right.is_real_node():
-        avl_to_array_rec(array, node.right, index)
