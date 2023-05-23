@@ -427,6 +427,10 @@ class AVLTree(object):
         return None
 
 
+"""rotates a given node right, as seen in class
+@type node: AVLNode
+@param node: the node to rotate
+"""
 def rotate_right(node):
     # AVL lecture slide 62
     left_child = node.left
@@ -444,6 +448,10 @@ def rotate_right(node):
     node.set_parent(left_child)
 
 
+"""rotates a given node left, as seen in class
+@type node: AVLNode
+@param node: the node to rotate
+"""
 def rotate_left(node):
     right_child = node.left
     node.set_right(right_child.left)
@@ -460,14 +468,32 @@ def rotate_left(node):
     node.set_parent(right_child)
 
 
+"""updates a given node's height
+@type node: AVLNode
+@param node: the node to update
+"""
 def update_height(node):
     node.set_height(max(node.left.height, node.right.height) + 1)
 
 
+"""calculates a given node's balance factor
+@type node: AVLNode
+@param node: the node to update
+@rtype: int
+@returns: the node's balance factor
+"""
 def bf(node):
     return node.left.height - node.right.height
 
 
+"""recursively creates a sorted array of (key, value) pairs from an avl tree
+@type node: array
+@param node: the array to place the (key, value) pairs into
+@type node: AVLNode
+@param node: the subtree to add to the array
+@type index: int
+@param index: the array index to put the first (key, value) pair in
+"""
 def avl_to_array_rec(array, node, index):
     if node.left.is_real_node():
         avl_to_array_rec(array, node.left, index)
