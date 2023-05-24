@@ -329,7 +329,23 @@ class AVLTree(object):
     dictionary larger than node.key.
     """
     def split(self, node):
-        return None
+        less = AVLTree()
+        less.root = node.left
+        greater = AVLTree()
+        greater.root = node.right
+        parent = node.parent
+        while parent is not None:
+            if node == parent.left:
+                left_subtree = AVLTree()
+                left_subtree.root = parent.right
+                greater.join(left_subtree, parent.key, parent.value)
+            else:  # node == parent.right
+                left_subtree = AVLTree()
+                left_subtree.root = parent.left
+                greater.join(left_subtree, parent.key, parent.value)
+            node = parent
+            parent = node.parent
+        return [less, greater]
 
     """joins self with key and another AVLTree
 
