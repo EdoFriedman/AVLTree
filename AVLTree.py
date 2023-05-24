@@ -228,26 +228,10 @@ class AVLTree(object):
             else:
                 rebalancing_ops += 1
                 node.set_height(max(node.left.height, node.right.height) + 1)
-            if bf(node) == 2:
-                if bf(node.left) == -1:
-                    rotate_left(node.left)
-                    rotate_right(node)
-                    rebalancing_ops += 2
-                    break
-                else:
-                    rotate_right(node)
-                    rebalancing_ops += 1
-                    break
-            elif bf(node) == -2:
-                if bf(node.right) == -1:
-                    rotate_left(node)
-                    rebalancing_ops += 1
-                    break
-                else:
-                    rotate_right(node.right)
-                    rotate_left(node.left)
-                    rebalancing_ops += 2
-                    break
+            rotation_count = do_rotations(node)
+            rebalancing_ops += rotation_count
+            if rotation_count > 0:
+                break
             node = node.parent
         while node is not None:
             node.size += 1
@@ -316,22 +300,7 @@ class AVLTree(object):
             else:
                 rebalancing_ops += 1
                 parent.set_height(max(parent.left.height, parent.right.height) + 1)
-            if bf(parent) == 2:
-                if bf(parent.left) == -1:
-                    rotate_left(parent.left)
-                    rotate_right(parent)
-                    rebalancing_ops += 2
-                else:
-                    rotate_right(parent)
-                    rebalancing_ops += 1
-            elif bf(parent) == -2:
-                if bf(parent.right) == 1:
-                    rotate_right(parent.right)
-                    rotate_left(parent.left)
-                    rebalancing_ops += 2
-                else:
-                    rotate_left(parent)
-                    rebalancing_ops += 1
+            rebalancing_ops += do_rotations(parent)
             parent = parent.parent
         return rebalancing_ops
 
@@ -402,7 +371,45 @@ class AVLTree(object):
     """
 
     def join(self, tree, key, val):
-        return None
+        if self.root.key < key:
+            t1 = self
+            t2 = tree
+        else:
+            t1 = tree
+            t2 = self
+        x = AVLNode(key, val)
+        if t2.root.height > t1.root.height:
+            b = t2.root
+            while b.height > t1.root.height:
+                b = b.left
+            x.left = t1.root
+            t1.root.parent = x
+            x.right = b
+            x.parent = b.parent
+            b.parent.left = x
+            b.parent = x
+        else:
+            b = t1.root
+            while b.height > t2:
+                b = b.right
+            x.left = b
+            x.right = t2.root
+            t2.root.parent = x
+            x.parent = b.parent
+            b.parent.right = x
+            b.parent = x
+        rebalancing_ops = 0
+        while x is not None:
+            x.size = x.left.size + x.right.size
+            if x.height == max(x.left.height, x.right.height) + 1:
+                break
+            else:
+                rebalancing_ops += 1
+                x.set_height(max(x.left.height, x.right.height) + 1)
+            rebalancing_ops += do_rotations(x)
+        while x is not None:
+            x.size = x.left.size + x.right.size
+        return rebalancing_ops
 
     """compute the rank of node in the self
 
@@ -510,6 +517,32 @@ def rotate_left(node):
         right_child.parent.set_right(right_child)
     update_height(right_child.parent)
     node.set_parent(right_child)
+
+
+"""Checks balance factor and does rotations
+    @type node: AVLNode
+    @param node: the node to rotate (if needed)
+    @rtype: int
+    @returns: the number of rotations that have been done
+"""
+def do_rotations(node):
+    if bf(node) == 2:
+        if bf(node.left) == -1:
+            rotate_left(node.left)
+            rotate_right(node)
+            return 2
+        else:
+            rotate_right(node)
+            return 1
+    elif bf(node) == -2:
+        if bf(node.right) == 1:
+            rotate_right(node.right)
+            rotate_left(node.left)
+            return 2
+        else:
+            rotate_left(node)
+            return 1
+    return 0
 
 
 """updates a given node's height
