@@ -280,6 +280,7 @@ class AVLTree(object):
             parent = parent.parent
         while parent is not None:
             parent.size = parent.left.size + parent.right.size + 1
+            parent = parent.parent
         return rebalancing_ops
 
     """returns an array representing dictionary 
@@ -384,6 +385,7 @@ class AVLTree(object):
             rebalancing_ops += do_rotations(x)
         while x is not None:
             x.size = x.left.size + x.right.size
+            x = x.parent
         return rebalancing_ops
 
     """compute the rank of node in the self
