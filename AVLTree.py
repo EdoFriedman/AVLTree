@@ -361,6 +361,7 @@ class AVLTree(object):
             x.parent = b.parent
             b.parent.left = x
             b.parent = x
+            self.root = t2.root
         else:
             b = t1.root
             while b.height > t2:
@@ -371,6 +372,7 @@ class AVLTree(object):
             x.parent = b.parent
             b.parent.right = x
             b.parent = x
+            self.root = t1.root
         rebalancing_ops = 0
         while x is not None:
             x.size = x.left.size + x.right.size + 1
