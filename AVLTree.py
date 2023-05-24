@@ -222,7 +222,7 @@ class AVLTree(object):
 
         rebalancing_ops = 0
         while node is not None:
-            node.size += 1
+            node.size = node.left.size + node.right.size + 1
             if node.height == max(node.left.height, node.right.height) + 1:
                 break
             else:
@@ -294,14 +294,16 @@ class AVLTree(object):
         rebalancing_ops = 0
         # Fix BF
         while parent is not None:
-            parent.size += 1
+            parent.size = parent.left.size + parent.right.size + 1
             if parent.height == max(parent.left.height, parent.right.height) + 1:
-                return rebalancing_ops
+                break
             else:
                 rebalancing_ops += 1
                 parent.set_height(max(parent.left.height, parent.right.height) + 1)
             rebalancing_ops += do_rotations(parent)
             parent = parent.parent
+        while parent is not None:
+            parent.size = parent.left.size + parent.right.size + 1
         return rebalancing_ops
 
     """returns an array representing dictionary 
@@ -400,7 +402,7 @@ class AVLTree(object):
             b.parent = x
         rebalancing_ops = 0
         while x is not None:
-            x.size = x.left.size + x.right.size
+            x.size = x.left.size + x.right.size + 1
             if x.height == max(x.left.height, x.right.height) + 1:
                 break
             else:
