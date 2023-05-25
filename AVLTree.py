@@ -258,6 +258,7 @@ class AVLTree(object):
     """
 
     def delete(self, node):
+        rebalancing_ops = 0
         # Delete normally.
         if node.height == 0:  # leaf.
             if node.parent is not None:
@@ -327,23 +328,24 @@ class AVLTree(object):
             else:
                 self.root = successor
 
-        rebalancing_ops = 0
+            if successor.height != max(successor.left.height, successor.right.height) + 1:
+                rebalancing_ops += 1
+                successor.set_height(max(successor.left.height, successor.right.height) + 1)
+            successor.size = successor.left.size + successor.right.size + 1
+
         # Fix BF
         while parent is not None:
             parent.size = parent.left.size + parent.right.size + 1
             if parent.height != max(parent.left.height, parent.right.height) + 1:
                 rebalancing_ops += 1
                 parent.set_height(max(parent.left.height, parent.right.height) + 1)
-                height_changed = True
-            else:
-                height_changed = False
+                # height_changed = True
+            # else:
+                # height_changed = False
             rotation_count = do_rotations(self, parent)
             rebalancing_ops += rotation_count
-            if rotation_count == 0 and not height_changed:
-                break
-            parent = parent.parent
-        while parent is not None:
-            parent.size = parent.left.size + parent.right.size + 1
+            # if rotation_count == 0 and not height_changed:
+            #     break
             parent = parent.parent
         return rebalancing_ops
 
@@ -387,7 +389,7 @@ class AVLTree(object):
     """
 
     def size(self):
-        return self.get_root().get_size()
+        return self.root.get_size()
 
     """splits the dictionary at a given node
 
@@ -403,18 +405,22 @@ class AVLTree(object):
     def split(self, node):
         less = AVLTree()
         less.root = node.left
+        less.root.parent = None
         greater = AVLTree()
         greater.root = node.right
+        greater.root.parent = None
         parent = node.parent
         while parent is not None:
             if node == parent.left:
-                left_subtree = AVLTree()
-                left_subtree.root = parent.right
-                greater.join(left_subtree, parent.key, parent.value)
+                right_subtree = AVLTree()
+                right_subtree.root = parent.right
+                right_subtree.root.parent = None
+                greater.join(right_subtree, parent.key, parent.value)
             else:  # node == parent.right
                 left_subtree = AVLTree()
                 left_subtree.root = parent.left
-                greater.join(left_subtree, parent.key, parent.value)
+                left_subtree.root.parent = None
+                less.join(left_subtree, parent.key, parent.value)
             node = parent
             parent = node.parent
         return [less, greater]
@@ -434,13 +440,17 @@ class AVLTree(object):
     """
 
     def join(self, tree, key, val):
-        if self.root.key < key:
+        if (self.root.is_real_node() and self.root.key < key) or (tree.root.is_real_node() and tree.root.key > key):
             t1 = self
             t2 = tree
-        else:
+        elif (tree.root.is_real_node() and tree.root.key < key) or (self.root.is_real_node() and self.root.key > key):
             t1 = tree
             t2 = self
+        else:  # both trees are empty
+            self.insert(key, val)
+            return 1
         x = AVLNode(key, val)
+        height_difference = abs(t2.root.height - t1.root.height) + 1
         if t2.root.height > t1.root.height:
             b = t2.root
             while b.height > t1.root.height:
@@ -454,28 +464,31 @@ class AVLTree(object):
             self.root = t2.root
         else:
             b = t1.root
-            while b.height > t2:
+            while b.height > t2.root.height:
                 b = b.right
             x.left = b
             x.right = t2.root
             t2.root.parent = x
             x.parent = b.parent
-            b.parent.right = x
+            if b.parent is not None:
+                b.parent.right = x
+            else:
+                t1.root = x
             b.parent = x
             self.root = t1.root
-        rebalancing_ops = 0
         while x is not None:
-            x.size = x.left.size + x.right.size + 1
-            if x.height == max(x.left.height, x.right.height) + 1:
-                break
-            else:
-                rebalancing_ops += 1
-                x.set_height(max(x.left.height, x.right.height) + 1)
-            rebalancing_ops += do_rotations(self, x)
+            # x.size = x.left.size + x.right.size + 1
+            # if x.height == max(x.left.height, x.right.height) + 1:
+            #     break
+            # else:
+            #     x.set_height(max(x.left.height, x.right.height) + 1)
+            update_attribs(x)
+            do_rotations(self, x)
+            x = x.parent
         while x is not None:
             x.size = x.left.size + x.right.size + 1
             x = x.parent
-        return rebalancing_ops
+        return height_difference
 
     """compute the rank of node in the self
 
