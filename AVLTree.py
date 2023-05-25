@@ -351,6 +351,8 @@ class AVLTree(object):
 
     @rtype: list
     @returns: a sorted list according to key of tuples (key, value) representing the data structure
+    
+    Complexity: O(n)
     """
 
     def avl_to_array(self):
@@ -365,6 +367,8 @@ class AVLTree(object):
     @param node: the subtree to add to the array
     @type index: int
     @param index: the array index to put the first (key, value) pair in
+    
+    Complexity: O(n)
     """
 
     def avl_to_array_rec(self, array, node, index):
@@ -541,6 +545,7 @@ class AVLTree(object):
 @param node: the node to rotate
 """
 
+
 def rotate_right(tree, node):
     # AVL lecture slide 62
     left_child = node.left
@@ -565,6 +570,7 @@ def rotate_right(tree, node):
 @type node: AVLNode
 @param node: the node to rotate
 """
+
 
 def rotate_left(tree, node):
     right_child = node.right
@@ -592,6 +598,7 @@ def rotate_left(tree, node):
     @returns: the number of rotations that have been done
 """
 
+
 def do_rotations(tree, node):
     if bf(node) == 2:
         if bf(node.left) == -1:
@@ -617,6 +624,7 @@ def do_rotations(tree, node):
 @param node: the node to update
 """
 
+
 def update_attribs(node):
     node.set_height(max(node.left.height, node.right.height) + 1)
     node.size = node.left.size + node.right.size + 1
@@ -628,6 +636,7 @@ def update_attribs(node):
 @rtype: int
 @returns: the node's balance factor
 """
+
 
 def bf(node):
     return node.left.height - node.right.height
