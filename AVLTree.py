@@ -196,6 +196,8 @@ class AVLTree(object):
         node.value = val
         node.left = AVLNode(None, None)
         node.right = AVLNode(None, None)
+        node.left.parent = node
+        node.right.parent = node
 
         rebalancing_ops = 0
         while node is not None:
@@ -205,13 +207,13 @@ class AVLTree(object):
             else:
                 rebalancing_ops += 1
                 node.set_height(max(node.left.height, node.right.height) + 1)
-            rotation_count = do_rotations(node)
+            rotation_count = do_rotations(self, node)
             rebalancing_ops += rotation_count
             if rotation_count > 0:
                 break
             node = node.parent
         while node is not None:
-            node.size += 1
+            node.size = node.left.size + node.right.size + 1
             node = node.parent
         return rebalancing_ops
 
@@ -276,7 +278,7 @@ class AVLTree(object):
             else:
                 rebalancing_ops += 1
                 parent.set_height(max(parent.left.height, parent.right.height) + 1)
-            rebalancing_ops += do_rotations(parent)
+            rebalancing_ops += do_rotations(self, parent)
             parent = parent.parent
         while parent is not None:
             parent.size = parent.left.size + parent.right.size + 1
@@ -398,7 +400,7 @@ class AVLTree(object):
             else:
                 rebalancing_ops += 1
                 x.set_height(max(x.left.height, x.right.height) + 1)
-            rebalancing_ops += do_rotations(x)
+            rebalancing_ops += do_rotations(self, x)
         while x is not None:
             x.size = x.left.size + x.right.size
             x = x.parent
@@ -467,20 +469,23 @@ class AVLTree(object):
 @type node: AVLNode
 @param node: the node to rotate
 """
-def rotate_right(node):
+def rotate_right(tree, node):
     # AVL lecture slide 62
     left_child = node.left
     node.set_left(left_child.right)
     node.left.set_parent(node)
-    update_height(node)
+    update_attribs(node)
     left_child.set_right(node)
-    update_height(left_child)
+    update_attribs(left_child)
     left_child.set_parent(node.parent)
-    if left_child.parent.left == node:
-        left_child.parent.set_left(left_child)
-    else:
-        left_child.parent.set_right(left_child)
-    update_height(left_child.parent)
+    if node.parent is not None:
+        if node.parent.left == node:
+            node.parent.set_left(left_child)
+        else:
+            node.parent.set_right(left_child)
+        update_attribs(left_child.parent)
+    else:  # if node was the root
+        tree.root = left_child
     node.set_parent(left_child)
 
 
@@ -488,19 +493,22 @@ def rotate_right(node):
 @type node: AVLNode
 @param node: the node to rotate
 """
-def rotate_left(node):
-    right_child = node.left
+def rotate_left(tree, node):
+    right_child = node.right
     node.set_right(right_child.left)
     node.right.set_parent(node)
-    update_height(node)
+    update_attribs(node)
     right_child.set_left(node)
-    update_height(right_child)
+    update_attribs(right_child)
     right_child.set_parent(node.parent)
-    if right_child.parent.left == node:
-        right_child.parent.set_left(right_child)
-    else:
-        right_child.parent.set_right(right_child)
-    update_height(right_child.parent)
+    if node.parent is not None:
+        if node.parent.left == node:
+            node.parent.set_left(right_child)
+        else:
+            node.parent.set_right(right_child)
+        update_attribs(right_child.parent)
+    else:  # if node was the root
+        tree.root = right_child
     node.set_parent(right_child)
 
 
@@ -510,22 +518,22 @@ def rotate_left(node):
     @rtype: int
     @returns: the number of rotations that have been done
 """
-def do_rotations(node):
+def do_rotations(tree, node):
     if bf(node) == 2:
         if bf(node.left) == -1:
-            rotate_left(node.left)
-            rotate_right(node)
+            rotate_left(tree, node.left)
+            rotate_right(tree, node)
             return 2
         else:
-            rotate_right(node)
+            rotate_right(tree, node)
             return 1
     elif bf(node) == -2:
         if bf(node.right) == 1:
-            rotate_right(node.right)
-            rotate_left(node.left)
+            rotate_right(tree, node.right)
+            rotate_left(tree, node)
             return 2
         else:
-            rotate_left(node)
+            rotate_left(tree, node)
             return 1
     return 0
 
@@ -534,8 +542,9 @@ def do_rotations(node):
 @type node: AVLNode
 @param node: the node to update
 """
-def update_height(node):
+def update_attribs(node):
     node.set_height(max(node.left.height, node.right.height) + 1)
+    node.size = node.left.size + node.right.size + 1
 
 
 """calculates a given node's balance factor
