@@ -364,18 +364,22 @@ class AVLTree(object):
     def split(self, node):
         less = AVLTree()
         less.root = node.left
+        less.root.parent = None
         greater = AVLTree()
         greater.root = node.right
+        greater.root.parent = None
         parent = node.parent
         while parent is not None:
             if node == parent.left:
-                left_subtree = AVLTree()
-                left_subtree.root = parent.right
-                greater.join(left_subtree, parent.key, parent.value)
+                right_subtree = AVLTree()
+                right_subtree.root = parent.right
+                right_subtree.root.parent = None
+                greater.join(right_subtree, parent.key, parent.value)
             else:  # node == parent.right
                 left_subtree = AVLTree()
                 left_subtree.root = parent.left
-                greater.join(left_subtree, parent.key, parent.value)
+                left_subtree.root.parent = None
+                less.join(left_subtree, parent.key, parent.value)
             node = parent
             parent = node.parent
         return [less, greater]
@@ -401,7 +405,7 @@ class AVLTree(object):
             t1 = tree
             t2 = self
         else:  # both trees are empty
-            tree.insert(key, val)
+            self.insert(key, val)
             return 1
         x = AVLNode(key, val)
         height_difference = abs(t2.root.height - t1.root.height) + 1
