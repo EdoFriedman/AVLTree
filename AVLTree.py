@@ -224,6 +224,8 @@ class AVLTree(object):
         node.value = val
         node.left = AVLNode(None, None)
         node.right = AVLNode(None, None)
+        node.left.parent = node
+        node.right.parent = node
 
         # do rebalancing operations using the algorithm we saw in class.
         rebalancing_ops = 0
@@ -234,13 +236,13 @@ class AVLTree(object):
             else:
                 rebalancing_ops += 1
                 node.set_height(max(node.left.height, node.right.height) + 1)
-            rotation_count = do_rotations(node)
+            rotation_count = do_rotations(self, node)
             rebalancing_ops += rotation_count
             if rotation_count > 0:
                 break
             node = node.parent
         while node is not None:
-            node.size += 1
+            node.size = node.left.size + node.right.size + 1
             node = node.parent
 
         return rebalancing_ops
@@ -258,39 +260,58 @@ class AVLTree(object):
     def delete(self, node):
         # Delete normally.
         if node.height == 0:  # leaf.
-            # find if node is left or right child of its parent and remove it.
-            if node.parent.right == node:
-                node.parent.right = AVLNode(None, None)
-            elif node.parent.left == node:
-                node.parent.left = AVLNode(None, None)
+            if node.parent is not None:
+                # find if node is left or right child of its parent and remove it.
+                if node.parent.right == node:
+                    node.parent.right = AVLNode(None, None)
+                    node.parent.right.parent = node.parent
+                elif node.parent.left == node:
+                    node.parent.left = AVLNode(None, None)
+                    node.parent.left.parent = node.parent
+            else:
+                self.root = AVLNode(None, None)
+                self.root.parent = node.parent
             parent = node.parent
         elif not node.left.is_real_node():  # no left child
-            # find if node is left or right child of its parent and remove it.
-            if node.parent.right == node:
-                node.parent.right = node.right
-            elif node.parent.left == node:
-                node.parent.left = node.right
+            if node.parent is not None:
+                # find if node is left or right child of its parent and remove it.
+                if node.parent.right == node:
+                    node.parent.right = node.right
+                elif node.parent.left == node:
+                    node.parent.left = node.right
+            else:
+                self.root = node.right
             node.right.parent = node.parent
             parent = node.parent
         elif not node.right.is_real_node():  # no right child
-            # find if node is left or right child of its parent and remove it.
-            if node.parent.right == node:
-                node.parent.right = node.left
-            elif node.parent.left == node:
-                node.parent.left = node.left
+            if node.parent is not None:
+                # find if node is left or right child of its parent and remove it.
+                if node.parent.right == node:
+                    node.parent.right = node.left
+                elif node.parent.left == node:
+                    node.parent.left = node.left
+            else:
+                self.root = node.left
             node.left.parent = node.parent
             parent = node.parent
         else:
             # find successor
             successor = node.right
-            while node.left.is_real_node():
+            while successor.left.is_real_node():
                 successor = successor.left
 
             # remove successor
-            successor.parent.left = successor.right  # if successor.right doesn't exist it's a virtual node
+            if successor.parent.left == successor:
+                successor.parent.left = successor.right  # if successor.right doesn't exist it's a virtual node
+            else:
+                successor.parent.right = successor.right
             successor.right.parent = successor.parent
 
-            parent = successor.parent
+            if successor.parent == node:
+                # in this case the parent of the physically deleted node is about to be removed
+                parent = successor
+            else:
+                parent = successor.parent
 
             # replace node with successor
             successor.left = node.left
@@ -298,18 +319,28 @@ class AVLTree(object):
             successor.right = node.right
             successor.right.parent = successor
             successor.parent = node.parent
-            node.parent = successor
+            if node.parent is not None:
+                if node.parent.left == node:
+                    node.parent.left = successor
+                else:
+                    node.parent.right = successor
+            else:
+                self.root = successor
 
         rebalancing_ops = 0
         # Fix BF
         while parent is not None:
             parent.size = parent.left.size + parent.right.size + 1
-            if parent.height == max(parent.left.height, parent.right.height) + 1:
-                break
-            else:
+            if parent.height != max(parent.left.height, parent.right.height) + 1:
                 rebalancing_ops += 1
                 parent.set_height(max(parent.left.height, parent.right.height) + 1)
-            rebalancing_ops += do_rotations(parent)
+                height_changed = True
+            else:
+                height_changed = False
+            rotation_count = do_rotations(self, parent)
+            rebalancing_ops += rotation_count
+            if rotation_count == 0 and not height_changed:
+                break
             parent = parent.parent
         while parent is not None:
             parent.size = parent.left.size + parent.right.size + 1
@@ -436,9 +467,9 @@ class AVLTree(object):
             else:
                 rebalancing_ops += 1
                 x.set_height(max(x.left.height, x.right.height) + 1)
-            rebalancing_ops += do_rotations(x)
+            rebalancing_ops += do_rotations(self, x)
         while x is not None:
-            x.size = x.left.size + x.right.size
+            x.size = x.left.size + x.right.size + 1
             x = x.parent
         return rebalancing_ops
 
@@ -510,21 +541,23 @@ class AVLTree(object):
 @param node: the node to rotate
 """
 
-
-def rotate_right(node):
+def rotate_right(tree, node):
     # AVL lecture slide 62
     left_child = node.left
     node.set_left(left_child.right)
     node.left.set_parent(node)
-    update_height(node)
+    update_attribs(node)
     left_child.set_right(node)
-    update_height(left_child)
+    update_attribs(left_child)
     left_child.set_parent(node.parent)
-    if left_child.parent.left == node:
-        left_child.parent.set_left(left_child)
-    else:
-        left_child.parent.set_right(left_child)
-    update_height(left_child.parent)
+    if node.parent is not None:
+        if node.parent.left == node:
+            node.parent.set_left(left_child)
+        else:
+            node.parent.set_right(left_child)
+        update_attribs(left_child.parent)
+    else:  # if node was the root
+        tree.root = left_child
     node.set_parent(left_child)
 
 
@@ -533,20 +566,22 @@ def rotate_right(node):
 @param node: the node to rotate
 """
 
-
-def rotate_left(node):
-    right_child = node.left
+def rotate_left(tree, node):
+    right_child = node.right
     node.set_right(right_child.left)
     node.right.set_parent(node)
-    update_height(node)
+    update_attribs(node)
     right_child.set_left(node)
-    update_height(right_child)
+    update_attribs(right_child)
     right_child.set_parent(node.parent)
-    if right_child.parent.left == node:
-        right_child.parent.set_left(right_child)
-    else:
-        right_child.parent.set_right(right_child)
-    update_height(right_child.parent)
+    if node.parent is not None:
+        if node.parent.left == node:
+            node.parent.set_left(right_child)
+        else:
+            node.parent.set_right(right_child)
+        update_attribs(right_child.parent)
+    else:  # if node was the root
+        tree.root = right_child
     node.set_parent(right_child)
 
 
@@ -557,23 +592,22 @@ def rotate_left(node):
     @returns: the number of rotations that have been done
 """
 
-
-def do_rotations(node):
+def do_rotations(tree, node):
     if bf(node) == 2:
         if bf(node.left) == -1:
-            rotate_left(node.left)
-            rotate_right(node)
+            rotate_left(tree, node.left)
+            rotate_right(tree, node)
             return 2
         else:
-            rotate_right(node)
+            rotate_right(tree, node)
             return 1
     elif bf(node) == -2:
         if bf(node.right) == 1:
-            rotate_right(node.right)
-            rotate_left(node.left)
+            rotate_right(tree, node.right)
+            rotate_left(tree, node)
             return 2
         else:
-            rotate_left(node)
+            rotate_left(tree, node)
             return 1
     return 0
 
@@ -583,9 +617,9 @@ def do_rotations(node):
 @param node: the node to update
 """
 
-
-def update_height(node):
+def update_attribs(node):
     node.set_height(max(node.left.height, node.right.height) + 1)
+    node.size = node.left.size + node.right.size + 1
 
 
 """calculates a given node's balance factor
@@ -594,7 +628,6 @@ def update_height(node):
 @rtype: int
 @returns: the node's balance factor
 """
-
 
 def bf(node):
     return node.left.height - node.right.height
