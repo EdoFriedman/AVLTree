@@ -394,13 +394,17 @@ class AVLTree(object):
     @returns: the absolute value of the difference between the height of the AVL trees joined +1
     """
     def join(self, tree, key, val):
-        if self.root.key < key:
+        if (self.root.is_real_node() and self.root.key < key) or (tree.root.is_real_node() and tree.root.key > key):
             t1 = self
             t2 = tree
-        else:
+        elif (tree.root.is_real_node() and tree.root.key < key) or (self.root.is_real_node() and self.root.key > key):
             t1 = tree
             t2 = self
+        else:  # both trees are empty
+            tree.insert(key, val)
+            return 1
         x = AVLNode(key, val)
+        height_difference = abs(t2.root.height - t1.root.height) + 1
         if t2.root.height > t1.root.height:
             b = t2.root
             while b.height > t1.root.height:
@@ -414,28 +418,30 @@ class AVLTree(object):
             self.root = t2.root
         else:
             b = t1.root
-            while b.height > t2:
+            while b.height > t2.root.height:
                 b = b.right
             x.left = b
             x.right = t2.root
             t2.root.parent = x
             x.parent = b.parent
-            b.parent.right = x
+            if b.parent is not None:
+                b.parent.right = x
+            else:
+                t1.root = x
             b.parent = x
             self.root = t1.root
-        rebalancing_ops = 0
         while x is not None:
             x.size = x.left.size + x.right.size + 1
             if x.height == max(x.left.height, x.right.height) + 1:
                 break
             else:
-                rebalancing_ops += 1
                 x.set_height(max(x.left.height, x.right.height) + 1)
-            rebalancing_ops += do_rotations(self, x)
+            do_rotations(self, x)
+            x = x.parent
         while x is not None:
             x.size = x.left.size + x.right.size + 1
             x = x.parent
-        return rebalancing_ops
+        return height_difference
 
     """compute the rank of node in the self
 
