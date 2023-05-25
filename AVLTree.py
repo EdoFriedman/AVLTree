@@ -225,6 +225,7 @@ class AVLTree(object):
     @returns: the number of rebalancing operation due to AVL rebalancing
     """
     def delete(self, node):
+        rebalancing_ops = 0
         # Delete normally.
         if node.height == 0:  # leaf.
             if node.parent is not None:
@@ -294,23 +295,24 @@ class AVLTree(object):
             else:
                 self.root = successor
 
-        rebalancing_ops = 0
+            if successor.height != max(successor.left.height, successor.right.height) + 1:
+                rebalancing_ops += 1
+                successor.set_height(max(successor.left.height, successor.right.height) + 1)
+            successor.size = successor.left.size + successor.right.size + 1
+
         # Fix BF
         while parent is not None:
             parent.size = parent.left.size + parent.right.size + 1
             if parent.height != max(parent.left.height, parent.right.height) + 1:
                 rebalancing_ops += 1
                 parent.set_height(max(parent.left.height, parent.right.height) + 1)
-                height_changed = True
-            else:
-                height_changed = False
+                # height_changed = True
+            # else:
+                # height_changed = False
             rotation_count = do_rotations(self, parent)
             rebalancing_ops += rotation_count
-            if rotation_count == 0 and not height_changed:
-                break
-            parent = parent.parent
-        while parent is not None:
-            parent.size = parent.left.size + parent.right.size + 1
+            # if rotation_count == 0 and not height_changed:
+            #     break
             parent = parent.parent
         return rebalancing_ops
 
@@ -347,7 +349,7 @@ class AVLTree(object):
     @returns: the number of items in dictionary 
     """
     def size(self):
-        return self.get_root().get_size()
+        return self.root.get_size()
 
     """splits the dictionary at a given node
 
