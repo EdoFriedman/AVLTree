@@ -435,11 +435,12 @@ class AVLTree(object):
             b.parent = x
             self.root = t1.root
         while x is not None:
-            x.size = x.left.size + x.right.size + 1
-            if x.height == max(x.left.height, x.right.height) + 1:
-                break
-            else:
-                x.set_height(max(x.left.height, x.right.height) + 1)
+            # x.size = x.left.size + x.right.size + 1
+            # if x.height == max(x.left.height, x.right.height) + 1:
+            #     break
+            # else:
+            #     x.set_height(max(x.left.height, x.right.height) + 1)
+            update_attribs(x)
             do_rotations(self, x)
             x = x.parent
         while x is not None:
