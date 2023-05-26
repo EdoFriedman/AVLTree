@@ -335,13 +335,13 @@ class AVLTree(object):
     @param index: the array index to put the first (key, value) pair in
     """
     def avl_to_array_rec(self, array, node, index):
-        if node.left.is_real_node():
-            self.avl_to_array_rec(array, node.left, index)
-            index += array.node.left.size
+        if not node.is_real_node():
+            return
+        self.avl_to_array_rec(array, node.left, index)
+        index += node.left.size
         array[index] = (node.key, node.value)
         index += 1
-        if node.right.is_real_node():
-            self.avl_to_array_rec(array, node.right, index)
+        self.avl_to_array_rec(array, node.right, index)
 
     """returns the number of items in dictionary 
 
@@ -459,7 +459,7 @@ class AVLTree(object):
     def rank(self, node):
         rank = node.left.size + 1
         x = node
-        while x is not None:
+        while x.parent is not None:
             if x == x.parent.right:
                 rank += x.parent.left.size + 1
             x = x.parent
