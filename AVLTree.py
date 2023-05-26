@@ -457,7 +457,7 @@ class AVLTree(object):
             self.insert(key, val)
             return 1
         x = AVLNode(key, val)
-        height_difference = abs(t2.root.height - t1.root.height) + 1
+        height_difference = abs(max(t2.root.height, 0) - max(t1.root.height, 0)) + 1
         if t2.root.height > t1.root.height:
             b = t2.root
             while b.height > t1.root.height:
