@@ -226,18 +226,19 @@ class AVLTree(object):
         node.right = AVLNode(None, None)
         node.left.parent = node
         node.right.parent = node
-
+        update_attribs(node)
+        node = node.parent
         # do rebalancing operations using the algorithm we saw in class.
         rebalancing_ops = 0
         while node is not None:
+            rotation_count = do_rotations(self, node)
+            rebalancing_ops += rotation_count
             node.size = node.left.size + node.right.size + 1
             if node.height == max(node.left.height, node.right.height) + 1:
                 break
             else:
                 rebalancing_ops += 1
                 node.set_height(max(node.left.height, node.right.height) + 1)
-            rotation_count = do_rotations(self, node)
-            rebalancing_ops += rotation_count
             if rotation_count > 0:
                 break
             node = node.parent
@@ -341,7 +342,7 @@ class AVLTree(object):
                 parent.set_height(max(parent.left.height, parent.right.height) + 1)
                 # height_changed = True
             # else:
-                # height_changed = False
+            # height_changed = False
             rotation_count = do_rotations(self, parent)
             rebalancing_ops += rotation_count
             # if rotation_count == 0 and not height_changed:
@@ -400,6 +401,8 @@ class AVLTree(object):
     @returns: a list [left, right], where left is an AVLTree representing the keys in the 
     dictionary smaller than node.key, right is an AVLTree representing the keys in the 
     dictionary larger than node.key.
+    
+    Complexity: O(log(n))
     """
 
     def split(self, node):
@@ -437,13 +440,17 @@ class AVLTree(object):
     or the other way around.
     @rtype: int
     @returns: the absolute value of the difference between the height of the AVL trees joined +1
+    
+    Complexity: O(log(n))
     """
 
     def join(self, tree, key, val):
-        if (self.root.is_real_node() and self.root.key < key) or (tree.root.is_real_node() and tree.root.key > key):
+        if (self.root.is_real_node() and self.root.key < key) or \
+                (tree.root.is_real_node() and tree.root.key > key):
             t1 = self
             t2 = tree
-        elif (tree.root.is_real_node() and tree.root.key < key) or (self.root.is_real_node() and self.root.key > key):
+        elif (tree.root.is_real_node() and tree.root.key < key) or \
+                (self.root.is_real_node() and self.root.key > key):
             t1 = tree
             t2 = self
         else:  # both trees are empty
@@ -497,6 +504,8 @@ class AVLTree(object):
     @param node: a node in the dictionary which we want to compute its rank
     @rtype: int
     @returns: the rank of node in self
+    
+    Complexity: O(log(n))
     """
 
     def rank(self, node):
@@ -516,6 +525,8 @@ class AVLTree(object):
     @param i: the rank to be selected in self
     @rtype: int
     @returns: the item of rank i in self
+    
+    Complexity: O(log(n))
     """
 
     def select(self, i):
@@ -523,14 +534,16 @@ class AVLTree(object):
 
     """recursively finds the i'th smallest item (according to keys) in self
 
-        @type i: int
-        @pre: 1 <= i <= self.size()
-        @param i: the rank to be selected in x
-        @type x: AVLNode
-        @param x: root of tree to select in. 
-        @rtype: int
-        @returns: the item of rank i in self
-        """
+    @type i: int
+    @pre: 1 <= i <= self.size()
+    @param i: the rank to be selected in x
+    @type x: AVLNode
+    @param x: root of tree to select in. 
+    @rtype: int
+    @returns: the item of rank i in self
+    
+    Complexity: O(log(n))
+    """
 
     def select_rec(self, x, i):
         rank = x.left.size + 1
@@ -543,9 +556,9 @@ class AVLTree(object):
 
     """returns the root of the tree representing the dictionary
 
-        @rtype: AVLNode
-        @returns: the root, None if the dictionary is empty
-        """
+    @rtype: AVLNode
+    @returns: the root, None if the dictionary is empty
+    """
 
     def get_root(self):
         if self.root.is_real_node():
