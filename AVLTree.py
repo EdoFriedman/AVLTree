@@ -220,6 +220,7 @@ class AVLTree(object):
                 node = node.left
             else:
                 node = node.right
+        # replace a virtual nodes with the real node we want to add, and give it virtual children
         node.key = key
         node.value = val
         node.left = AVLNode(None, None)
@@ -235,14 +236,16 @@ class AVLTree(object):
             rebalancing_ops += rotation_count
             node.size = node.left.size + node.right.size + 1
             if node.height == max(node.left.height, node.right.height) + 1:
+                # if the node's height didn't change, it's parents' heights also didn't change
                 break
             else:
                 rebalancing_ops += 1
                 node.set_height(max(node.left.height, node.right.height) + 1)
-            if rotation_count > 0:
+            if rotation_count > 0:  # if we did a rotation, stop
                 break
             node = node.parent
         while node is not None:
+            # if we broke out of the previous loop early, we still have to update some nodes' height and size
             node.size = node.left.size + node.right.size + 1
             node = node.parent
 
@@ -340,13 +343,9 @@ class AVLTree(object):
             if parent.height != max(parent.left.height, parent.right.height) + 1:
                 rebalancing_ops += 1
                 parent.set_height(max(parent.left.height, parent.right.height) + 1)
-                # height_changed = True
-            # else:
-            # height_changed = False
+
             rotation_count = do_rotations(self, parent)
             rebalancing_ops += rotation_count
-            # if rotation_count == 0 and not height_changed:
-            #     break
             parent = parent.parent
         return rebalancing_ops
 
@@ -359,7 +358,7 @@ class AVLTree(object):
     """
 
     def avl_to_array(self):
-        arr = [0] * self.size()  # create array to store final result
+        arr = [0] * self.size()  # create array to store final result, this way there is no overhead to adding items
         self.avl_to_array_rec(arr, self.root, 0)  # call recursive function to modify array accordingly.
         return arr
 
@@ -375,6 +374,7 @@ class AVLTree(object):
     """
 
     def avl_to_array_rec(self, array, node, index):
+        # in-order walk, where processing a variable means adding it to the array
         if not node.is_real_node():
             return
         self.avl_to_array_rec(array, node.left, index)
@@ -406,6 +406,7 @@ class AVLTree(object):
     """
 
     def split(self, node):
+        # Create the left and right trees. Their initial roots are node's children
         less = AVLTree()
         less.root = node.left
         less.root.parent = None
@@ -414,6 +415,9 @@ class AVLTree(object):
         greater.root.parent = None
         parent = node.parent
         while parent is not None:
+            # Traverse up.
+            # if going right (node == parent.left => key < parent.right), add (join) the right subtree to greater.
+            # Otherwise add the left subtree to less
             if node == parent.left:
                 right_subtree = AVLTree()
                 right_subtree.root = parent.right
@@ -445,6 +449,7 @@ class AVLTree(object):
     """
 
     def join(self, tree, key, val):
+        # Alias self and tree as t1 and t2 such that t1's keys are less than key and t2's keys are greater than key
         if (self.root.is_real_node() and self.root.key < key) or \
                 (tree.root.is_real_node() and tree.root.key > key):
             t1 = self
@@ -453,12 +458,13 @@ class AVLTree(object):
                 (self.root.is_real_node() and self.root.key > key):
             t1 = tree
             t2 = self
-        else:  # both trees are empty
+        else:  # both trees are empty. Both of them are both less than key and greater than key
             self.insert(key, val)
             return 1
         x = AVLNode(key, val)
         height_difference = abs(max(t2.root.height, 0) - max(t1.root.height, 0)) + 1
         if t2.root.height > t1.root.height:
+            # Find what should be x's right child
             b = t2.root
             while b.height > t1.root.height:
                 b = b.left
@@ -469,7 +475,7 @@ class AVLTree(object):
             b.parent.left = x
             b.parent = x
             self.root = t2.root
-        else:
+        else:  # Symmetric
             b = t1.root
             while b.height > t2.root.height:
                 b = b.right
@@ -484,16 +490,9 @@ class AVLTree(object):
             b.parent = x
             self.root = t1.root
         while x is not None:
-            # x.size = x.left.size + x.right.size + 1
-            # if x.height == max(x.left.height, x.right.height) + 1:
-            #     break
-            # else:
-            #     x.set_height(max(x.left.height, x.right.height) + 1)
+            # Update heights and fix BF criminals
             update_attribs(x)
             do_rotations(self, x)
-            x = x.parent
-        while x is not None:
-            x.size = x.left.size + x.right.size + 1
             x = x.parent
         return height_difference
 
@@ -512,6 +511,7 @@ class AVLTree(object):
         rank = node.left.size + 1
         x = node
         while x.parent is not None:
+            # Count the number of nodes above node that have keys less than node.key
             if x == x.parent.right:
                 rank += x.parent.left.size + 1
             x = x.parent
@@ -599,6 +599,7 @@ def rotate_right(tree, node):
 
 
 def rotate_left(tree, node):
+    # Symmetric (see rotate_right)
     right_child = node.right
     node.set_right(right_child.left)
     node.right.set_parent(node)
@@ -626,6 +627,7 @@ def rotate_left(tree, node):
 
 
 def do_rotations(tree, node):
+    # Do the correct rotation, depending on node's bf and node.left's and node.right's bf
     if bf(node) == 2:
         if bf(node.left) == -1:
             rotate_left(tree, node.left)
@@ -642,10 +644,11 @@ def do_rotations(tree, node):
         else:
             rotate_left(tree, node)
             return 1
+    # If we haven't returned yet, it means we didn't do a rotation
     return 0
 
 
-"""updates a given node's height
+"""updates a given node's height and size
 @type node: AVLNode
 @param node: the node to update
 """
